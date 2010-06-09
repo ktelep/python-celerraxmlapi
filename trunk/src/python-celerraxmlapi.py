@@ -52,12 +52,11 @@ class CelerraAPISleeper ( threading.Thread ):
 
 class CelerraAPIConnection:
     def __init__(self,nasIP,nasUser,nasPass):
-    
+   
         self._isConnected = False
-            
+
         # Setup our CookieJar and Opener
         self._cj = cookielib.LWPCookieJar()
-         
         self._opener = urllib2.build_opener(urllib2.HTTPCookieProcessor(self._cj))
         
         # Our URLs for connection
@@ -71,17 +70,25 @@ class CelerraAPIConnection:
         self._loginValues = {'Login':'Login', 'user':nasUser, 'password':nasPass}
 
     def connect(self):
-       
+
+        # Build our HTTP Request to the login URL with our login Data       
         data = urllib.urlencode(self._loginValues)
         req = urllib2.Request(self._loginurl,data,self._useragent)
 
         response = self._opener.open(req)
-        if len(self._cj) == 0:   # We should have a cookie if we got authenticated
-            return 1   # Should throw an exception here probably
+        
+        # We should have at least 1 cookie in the jar if we successfully authenticated
+        if len(self._cj) == 0:   
+            return 1   # TODO:  Throw an Exception (Authentication Failed?)
+        
         else :
             self._isConnected = True
             self._sleeper = CelerraAPISleeper(self)
             self._sleeper.start()
+
+    def isConnected(self):
+        """ Returns True if the client is connected to the NAS, False if not """
+        return self._isConnected
 
     def disconnect(self):
         self._killSleeper()
